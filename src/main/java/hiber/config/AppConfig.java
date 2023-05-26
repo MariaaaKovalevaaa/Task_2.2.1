@@ -1,5 +1,6 @@
 package hiber.config;
 
+import hiber.model.Car;
 import hiber.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -16,15 +17,19 @@ import javax.sql.DataSource;
 import java.util.Properties;
 
 
-@Configuration
-@PropertySource("classpath:db.properties")
-@EnableTransactionManagement
-@ComponentScan(value = "hiber")
+@Configuration //Говорит о том, что это конфигурационный класс
+@PropertySource("classpath:db.properties") //Указываем, где брать свойства
+@EnableTransactionManagement // Аннотация @EnableTransactionManagement означает, что классы,
+// помеченные @Transactional, должны быть обернуты аспектом транзакций.
+// Эта аннотация активирует возможности Spring бесшовной транзакции через @Transactional
+@ComponentScan(value = "hiber") //Указываем какой пакет сканировать на предмет наличия
+// аннотаций @Component, @Service, @Repository
 public class AppConfig {
 
-   @Autowired
-   private Environment env;
+   @Autowired //Подключаем зависимость
+   private Environment env; //Интерфейс Environment - это окружение, в котором приложение запущено.
 
+   //Бин этого класса ответственен за подключение к БД
    @Bean
    public DataSource getDataSource() {
       DriverManagerDataSource dataSource = new DriverManagerDataSource();
@@ -35,6 +40,8 @@ public class AppConfig {
       return dataSource;
    }
 
+
+   //Бин этого класса, ответственен за создание SessionFactory - фабрики по производству сессий
    @Bean
    public LocalSessionFactoryBean getSessionFactory() {
       LocalSessionFactoryBean factoryBean = new LocalSessionFactoryBean();
@@ -43,12 +50,15 @@ public class AppConfig {
       Properties props=new Properties();
       props.put("hibernate.show_sql", env.getProperty("hibernate.show_sql"));
       props.put("hibernate.hbm2ddl.auto", env.getProperty("hibernate.hbm2ddl.auto"));
+      props.put("hibernate.dialect", env.getProperty("hibernate.dialect"));
+//      props.put("hibernate.CURRENT_SESSION_CONTEXT_CLASS", env.getProperty("hibernate.CURRENT_SESSION_CONTEXT_CLASS"));
 
       factoryBean.setHibernateProperties(props);
-      factoryBean.setAnnotatedClasses(User.class);
+      factoryBean.setAnnotatedClasses(User.class, Car.class);
       return factoryBean;
    }
 
+   //Бин этого класса ответственен за осуществление старта транзакции у методов, аннотированных @Transactional
    @Bean
    public HibernateTransactionManager getTransactionManager() {
       HibernateTransactionManager transactionManager = new HibernateTransactionManager();
